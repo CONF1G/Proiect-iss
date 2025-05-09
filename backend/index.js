@@ -15,7 +15,7 @@ app.use(express.json())
 app.use(cors())
 
 app.get("/", (req, res) => {
-    res.json("hello this is the backend")
+    // res.json("hello this is the backend")
 });
 
 app.get("/books", (req, res) => {
@@ -50,7 +50,6 @@ app.delete("/books/:id", (req, res) => {
         return res.json("Book has been deleted successfully.");
     });
 });
-
 app.put("/books/:id", (req, res) => {
     const bookId = req.params.id;
     const q = "UPDATE books SET `title`= ?, `desc`= ?, `price`= ?, `cover`= ? WHERE id = ?";

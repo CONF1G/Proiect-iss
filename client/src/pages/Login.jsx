@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
@@ -7,32 +6,32 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({});
-  const navigate=useNavigate();
+  const navigate = useNavigate();
 
   // Validation function for email and password
-//   const validateForm = () => {
-//     const errors = {};
-//     if (!email) {
-//       errors.email = "Email is required";
-//     } else if (!/\S+@\S+\.\S+/.test(email)) {
-//       errors.email = "Please enter a valid email address";
-//     }
-//     if (!password) {
-//       errors.password = "Password is required";
-//     }
-//     return errors;
-//   };
+  const validateForm = () => {
+    const errors = {};
+    if (!email) {
+      errors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      errors.email = "Please enter a valid email address";
+    }
+    if (!password) {
+      errors.password = "Password is required";
+    }
+    return errors;
+  };
 
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     // Validate form fields
-    // const validationErrors = validateForm();
-    // if (Object.keys(validationErrors).length > 0) {
-    //   setErrors(validationErrors);
-    //   return;
-    // }
+    const validationErrors = validateForm();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
 
     try {
       // Make API request to login
@@ -42,63 +41,44 @@ const Login = () => {
       });
 
       if (response.data.success) {
-        console.log(response);
-        
         console.log("Login successful!");
-        // Redirect or save token as needed
-        // const token = errorponse.data.token;
-        console.log("");
-        
-        sessionStorage.setItem("authToken");
-        navigate('/books')
+        sessionStorage.setItem("authToken", response.data.token);
+        navigate("/books");
         fetchUserDetails();
       } else {
-        setErrors(response.data.message || "Login failed");
+        setErrors({ general: response.data.message || "Login failed" });
       }
     } catch (error) {
       console.error("Error during login:", error);
-      setErrors(error.response.data.message || "Something went wrong. Please try again later.");
-    
+      setErrors({
+        general: error.response?.data?.message || "Something went wrong. Please try again later.",
+      });
     }
   };
 
- 
-
-  // useEffect(() => {
-    
-  // }, []);
   const fetchUserDetails = async () => {
     try {
-      // Retrieve token from localStorage or other secure storage
-      const token = sessionStorage.getItem('authToken'); // Replace with actual token retrieval
-      console.log(token);
-      
+      const token = sessionStorage.getItem("authToken");
       if (!token) {
-        // setError('User is not logged in');
+        console.error("User is not logged in");
         return;
       }
 
-      // Make the API request with the token in the Authorization header
-      const response = await axios.get('http://localhost:3300/api/auth/get-userDetails', {
+      const response = await axios.get("http://localhost:3300/api/auth/profile", {
         headers: {
-          Authorization: `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
 
-      console.log(response);
-      
       if (response.data.success) {
-        console.log(response.data.user);
+        console.log("User details:", response.data.user);
       } else {
-        console.log(response.data.message || 'Failed to fetch user details');
+        console.error(response.data.message || "Failed to fetch user details");
       }
     } catch (err) {
-      console.error('Error fetching user details:', err);
-      console.log(err.response?.data?.message || 'An error occurred');
+      console.error("Error fetching user details:", err);
     }
   };
-
-  // fetchUserDetails();
 
   return (
     <div className="login-container">
@@ -126,11 +106,11 @@ const Login = () => {
           />
           {errors.password && <span className="error-message">{errors.password}</span>}
         </div>
+        {errors.general && <span className="error-message">{errors.general}</span>}
         <button type="submit" className="login-btn">
           Login
         </button>
       </form>
-      
       <p style={{ textAlign: "center" }}>
         Don't have an account?{" "}
         <Link

@@ -16,9 +16,13 @@ export const createUser = (req, res) => {
   if (!email || !password) {
     return res.status(400).json({ message: 'Email and password are required' });
   }
-  
-  const newUser = { email, password }; // Create a new user object
-  users.push(newUser); // Add the new user to the array
-  
-  res.status(201).json({ message: 'User registered successfully', user: newUser });
+
+  const q = "INSERT INTO users (email, password) VALUES (?, ?)";
+  const values = [email, password];
+
+  db.query(q, values, (err, result) => {
+    if (err) return res.status(500).json({ message: 'Database error', error: err });
+
+    return res.status(201).json({ message: 'User registered successfully', user: { email } });
+  });
 };

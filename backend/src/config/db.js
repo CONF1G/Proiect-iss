@@ -1,7 +1,7 @@
+import express from "express";
 import mysql from "mysql";
-import dotenv from "dotenv";
 
-dotenv.config();
+const app = express(); 
 
 const db = mysql.createConnection({
     host: "localhost",
@@ -10,17 +10,16 @@ const db = mysql.createConnection({
     database: "test"
 });
 
-const checkConnection=async()=>{
+const checkConnection = async () => {
     try {
-        const connection=await pool.getConnection();
-        console.log("Database Connection Successfull!!");
+        const connection = await pool.getConnection();
+        console.log("Database Connection Successful!");
         connection.release();
-        
     } catch (error) {
         console.log("Error connecting to database!");
         throw error;
-        
     }
 }
 
-export {db,checkConnection};
+export default db;
+export { checkConnection };
