@@ -15,20 +15,20 @@ const generateToken = (userId) => {
 // User registration
 export const register = async (req, res) => {
     try {
-        const { username, email, password } = req.body;
+        const { username, email, password, mobile } = req.body;
 
         // Validation
         if (!username || !email || !password) {
             return res.status(400).json({
                 success: false,
-                message: 'All fields are required'
+                message: 'All fields except mobile are required',
             });
         }
 
         // Check if user exists
         const existingUsers = await new Promise((resolve, reject) => {
             db.query(
-                'SELECT * FROM test.users WHERE email = ? OR username = ?',
+                'SELECT * FROM users WHERE email = ? OR username = ?',
                 [email, username],
                 (err, results) => {
                     if (err) return reject(err);
@@ -40,18 +40,18 @@ export const register = async (req, res) => {
         if (existingUsers.length > 0) {
             return res.status(400).json({
                 success: false,
-                message: 'User already exists'
+                message: 'User already exists',
             });
         }
 
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Insert new user
+        // Insert new user with default userType as 'agent' and include mobile
         await new Promise((resolve, reject) => {
             db.query(
-                'INSERT INTO test.users (username, email, password) VALUES (?, ?, ?)',
-                [username, email, hashedPassword],
+                'INSERT INTO users (username, email, password, mobile, userType) VALUES (?, ?, ?, ?, ?)',
+                [username, email, hashedPassword, mobile, 'agent'],
                 (err, results) => {
                     if (err) return reject(err);
                     resolve(results);
@@ -61,14 +61,13 @@ export const register = async (req, res) => {
 
         return res.status(201).json({
             success: true,
-            message: 'User registered successfully'
+            message: 'User registered successfully',
         });
-
     } catch (err) {
         console.error('Registration error:', err);
         return res.status(500).json({
             success: false,
-            message: 'Registration failed'
+            message: 'Registration failed',
         });
     }
 };

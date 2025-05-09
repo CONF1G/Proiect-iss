@@ -1,6 +1,7 @@
 // app.js
 import express from 'express';
 import userRoutes from './src/routes/userRoutes.js';
+import productsRoutes from './src/routes/productsRoutes.js';
 import { checkConnection } from './src/config/db.js';
 
 // import createAllTable from './utils/dbUtils.js';
@@ -17,6 +18,8 @@ app.get("/", (req, res) => {
 app.use(express.json()); // Middleware to parse JSON bodies
 app.use('/api/users', userRoutes); // Use user routes for API calls
 app.use('/api/auth', authRoutes); // Use user routes for API calls
+//crud products
+app.use('/api', productsRoutes);
 
 
 app.listen(3300, async() => {
