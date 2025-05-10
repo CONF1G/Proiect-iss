@@ -1,15 +1,15 @@
 import db from '../config/db.js';
 
 // Get all products
-export const getAllProducts = (req, res) => {
-    const query = 'SELECT * FROM products';
-    db.query(query, (err, results) => {
-      if (err) {
-        console.error('Error fetching products:', err);
-        return res.status(500).json({ success: false, message: 'Failed to fetch products' });
-      }
+export const getAllProducts = async (req, res) => {
+    try {
+      const query = 'SELECT * FROM products';
+      const [results] = await db.query(query); // Use async/await with mysql2/promise
       res.status(200).json({ success: true, products: results });
-    });
+    } catch (err) {
+      console.error('Error fetching products:', err);
+      res.status(500).json({ success: false, message: 'Failed to fetch products' });
+    }
   };
 
 // Add a new product

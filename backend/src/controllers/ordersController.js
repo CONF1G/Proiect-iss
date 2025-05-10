@@ -19,27 +19,25 @@ const calculateOrderTotal = async (productId, quantity) => {
 
 // Get all orders with enhanced product details
 export const getOrders = async (req, res) => {
-
+  try {
     const query = 'SELECT * FROM orders';
-    db.query(query, (err, results) => {
-      if (err) {
-        console.error('Error fetching products:', err);
-        return res.status(500).json({ success: false, message: 'Failed to fetch products' });
-      }
-      res.status(200).json({ success: true, products: results });
-    });
-  };
-
+    const [results] = await db.query(query); // Use async/await with mysql2/promise
+    res.status(200).json({ success: true, orders: results });
+  } catch (err) {
+    console.error('Error fetching orders:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch orders' });
+  }
+};
   
 // Create a new order with transaction support
 export const createOrder = async (req, res) => {
   const connection = await db.getConnection();
   try {
     await connection.beginTransaction();
-    
+
     const { productId, quantity } = req.body;
+
     const validation = validateOrderData(productId, quantity);
-    
     if (!validation.valid) {
       return res.status(400).json({
         success: false,
@@ -47,9 +45,9 @@ export const createOrder = async (req, res) => {
       });
     }
 
-    // Verify product exists and get current price
+    // Verify product exists
     const [product] = await connection.query(
-      'SELECT id, price, stock FROM products WHERE id = ? FOR UPDATE',
+      'SELECT price FROM products WHERE id = ?',
       [productId]
     );
 
@@ -60,68 +58,46 @@ export const createOrder = async (req, res) => {
       });
     }
 
-    // Check product stock if inventory management is needed
-    // if (product[0].stock < quantity) {
-    //   return res.status(400).json({
-    //     success: false,
-    //     message: "Insufficient stock"
-    //   });
-    // }
+    // Calculate total price
+    const totalPrice = product[0].price * quantity;
 
-    // Create the order
+    // Insert the order
     const [result] = await connection.query(
-      'INSERT INTO orders (product_id, quantity) VALUES (?, ?)',
-      [productId, quantity]
+      'INSERT INTO orders (product_id, quantity, total_price) VALUES (?, ?, ?)',
+      [productId, quantity, totalPrice]
     );
 
-    // Update product stock if needed
-    // await connection.query(
-    //   'UPDATE products SET stock = stock - ? WHERE id = ?',
-    //   [quantity, productId]
-    // );
-
     await connection.commit();
-
-    // Get full order details
-    const [newOrder] = await db.query(`
-      SELECT 
-        o.id,
-        o.product_id,
-        p.name AS product_name,
-        p.price AS unit_price,
-        o.quantity,
-        (p.price * o.quantity) AS total_price
-      FROM orders o
-      JOIN products p ON o.product_id = p.id
-      WHERE o.id = ?
-    `, [result.insertId]);
 
     res.status(201).json({
       success: true,
       message: "Order created successfully",
-      data: newOrder[0]
+      data: {
+        orderId: result.insertId,
+        productId,
+        quantity,
+        totalPrice
+      }
     });
 
   } catch (error) {
     await connection.rollback();
     console.error("Order creation failed:", error);
-    
-    if (error.code === 'ER_NO_REFERENCED_ROW_2') {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid product reference"
-      });
-    }
 
     res.status(500).json({
       success: false,
       message: "Failed to create order",
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: process.env.NODE_ENV === 'development' ? {
+        message: error.message,
+        code: error.code,
+        sql: error.sql
+      } : undefined
     });
   } finally {
     connection.release();
   }
 };
+
 
 // Get single order by ID
 export const getOrderById = async (req, res) => {

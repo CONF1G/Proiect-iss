@@ -7,6 +7,8 @@ import { ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css'; // Import default CSS for toastify
 import UserHomeScreen from "./pages/MainPage";
 import PlaceOrder from "./pages/PlaceOrder";
+import ProtectedRoute from "./components/ProtectedRoute";
+import AdminPage from "./pages/AdminPage";
 
 const Login = lazy(() => import("./pages/Login"));
 const Signup = lazy(() => import("./pages/Signup"));
@@ -15,7 +17,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const App = () => {
   return (
     <Router>
-      <Header/>
+      <Header />
       <Suspense fallback={<div>Loading...</div>}>
         <Routes>
           <Route path="/" element={<Home />} />
@@ -25,15 +27,23 @@ const App = () => {
           <Route path="/placeOrder" element={<PlaceOrder />} />
           {/* Add more routes as needed */}
           <Route path="*" element={<NotFound />} />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminPage />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </Suspense>
-      <ToastContainer 
-        position="top-center" 
-        autoClose={1000} 
-        hideProgressBar={true} 
-        closeOnClick 
+      <ToastContainer
+        position="top-center"
+        autoClose={1000}
+        hideProgressBar={true}
+        closeOnClick
         // pauseOnHover  
-        theme="colored" 
+        theme="colored"
       />
     </Router>
   );

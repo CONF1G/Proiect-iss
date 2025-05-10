@@ -135,27 +135,24 @@ export const login = async (req, res) => {
 
 // Get user details
 export const getUserDetails = async (req, res) => {
+    
+    const token = req.headers.authorization?.split(' ')[1]; // Extract the token from the Authorization header
+    console.log(token);
+
+    if (!token) {
+        return res.status(401).json({ success: false, message: 'Token not provided' });
+    }
+
     try {
-        // Extract user ID from authenticated request
+        const response = await getUserFromToken(token);
 
-        const q = "SELECT * FROM test.users"
-        db.query(q, (err, data) => {
-            if (err) return res.json(err)
-            return res.json(data)
-        });
-
-        if (q.length === 0) {
-            return res.status(404).json({
-                success: false,
-                message: 'User not found'
-            });
+        if (response.success) {
+            return res.status(200).json({ success: true, user: response.user });
+        } else {
+            return res.status(401).json({ success: false, message: response.message });
         }
-
-    } catch (err) {
-        console.error('Get user error:', err);
-        res.status(500).json({
-            success: false,
-            message: 'Server error fetching user details'
-        });
+    } catch (error) {
+        console.error('Error fetching user details:', error);
+        return res.status(500).json({ success: false, message: 'Failed to retrieve user details' });
     }
 };
