@@ -1,102 +1,152 @@
-import React, { useState } from 'react';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import axios from "axios";
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
 
-// Optional: Use a config file for the API base URL
-const API_BASE_URL = 'http://localhost:3300/api';
-
-const Signup = () => {
-  const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    password: '',
-    mobile: ''
+const SignUp = () => {
+  const [formValues, setFormValues] = useState({
+    username: "",
+    email: "",
+    password: "",
+    userType: "agent",
+    mobile: "",
+    secretKey: "",
   });
-  const [error, setError] = useState('');
-  const navigate = useNavigate();
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-    setError(''); // Clear error message when user starts typing
-  };
-
-  const validateForm = () => {
-    const { username, email, password, mobile } = formData;
-    if (!username || !email || !password) {
-      return 'All fields except mobile are required.';
-    }
-    if (!/\S+@\S+\.\S+/.test(email)) {
-      return 'Please enter a valid email address.';
-    }
-    if (password.length < 6) {
-      return 'Password must be at least 6 characters long.';
-    }
-    return null;
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Validate form fields
-    const validationError = validateForm();
-    if (validationError) {
-      setError(validationError);
+    if(formValues.userType==="admin" && formValues.secretKey!=="yes"){
+      toast.error("Invalid Secret Key for Admin!!");
       return;
     }
 
+
     try {
-      const response = await axios.post(`${API_BASE_URL}/auth/register`, formData);
+      const response = await axios.post(
+        "http://localhost:3300/api/auth/register",
+        formValues
+      );
       if (response.data.success) {
-        navigate('/login'); // Redirect to login page on successful registration
+        toast.success(response.data.message || "Registration successful!");
+        setFormValues({ username: "", email: "", mobile: "", password: "" });
       } else {
-        setError(response.data.message || 'Registration failed');
+        toast.error(response.data.message || "Registration failed!");
       }
-    } catch (err) {
-      setError(err.response?.data?.message || 'Something went wrong. Please try again.');
+    } catch (error) {
+      console.error("Error during registration:", error);
+      toast.error(
+        error.response.data.message ||
+          "Something went wrong. Please try again later."
+      );
     }
   };
 
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormValues({ ...formValues, [name]: value });
+  };
+
   return (
-    <div className="signup-container">
-      <h2>Create Account</h2>
-      {error && <div className="error-message">{error}</div>}
+    <div className="login-container">
+      <h2>Sign Up</h2>
       <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          name="username"
-          placeholder="Username"
-          value={formData.username}
-          onChange={handleChange}
-          required
-        />
-        <input
-          type="email"
-          name="email"
-          placeholder="Email"
-          value={formData.email}
-          onChange={handleChange}
-          required
-        />
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          value={formData.password}
-          onChange={handleChange}
-          required
-          minLength="6"
-        />
-        <input
-          type="tel"
-          name="mobile"
-          placeholder="Mobile Number"
-          value={formData.mobile}
-          onChange={handleChange}
-        />
-        <button type="submit">Sign Up</button>
+        <div className="form-group">
+          <label>User Type</label>
+          <div className="radio-div">
+            <label className="radio-label">
+              <input
+                type="radio"
+                name="userType"
+                value="agent"
+                checked={formValues.userType === "agent"}
+                onChange={handleInputChange}
+              />
+              User
+            </label>
+            <label className="radio-label">
+              <input
+                type="radio"
+                name="userType"
+                value="admin"
+                checked={formValues.userType === "admin"}
+                onChange={handleInputChange}
+              />
+              Admin
+            </label>
+          </div>
+        </div>
+        {formValues.userType === "admin" ? (
+          <div className="form-group">
+            <label>Secret Key (Admin Only)</label>
+            <input
+              type="text"
+              name="secretKey"
+              placeholder="Enter Secret Key"
+              value={formValues.secretKey}
+              onChange={handleInputChange}
+            />
+          </div>
+        ) : (
+          ""
+        )}
+
+        <div className="form-group">
+          <label>Username</label>
+          <input
+            type="text"
+            placeholder="Enter your username"
+            name="username"
+            value={formValues.username}
+            onChange={handleInputChange}
+          />
+        </div>
+        <div className="form-group">
+          <label>Email</label>
+          <input
+            type="email"
+            name="email"
+            placeholder="Enter your email"
+            value={formValues.email}
+            onChange={handleInputChange}
+          />
+        </div>
+        <div className="form-group">
+          <label>Mobile No</label>
+          <input
+            type="tel"
+            name="mobile"
+            placeholder="Enter your mobile number"
+            value={formValues.mobile}
+            onChange={handleInputChange}
+          />
+        </div>
+        <div className="form-group">
+          <label>Password</label>
+          <input
+            type="password"
+            name="password"
+            placeholder="Enter your password"
+            value={formValues.password}
+            onChange={handleInputChange}
+          />
+        </div>
+
+        <button type="submit" className="login-btn">
+          Sign Up
+        </button>
       </form>
+      <p style={{ textAlign: "center" }}>
+        Already have an account?{" "}
+        <Link
+          to="/login"
+          className="toggle-link"
+          style={{ color: "#007BFF", textDecoration: "underline" }}
+        >
+          Login
+        </Link>
+      </p>
     </div>
   );
 };
 
-export default Signup;
+export default SignUp;

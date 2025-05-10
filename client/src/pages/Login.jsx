@@ -7,7 +7,7 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({});
-  const navigate=useNavigate();
+  const navigate = useNavigate();
 
   // Validation function for email and password
   const validateForm = () => {
@@ -28,11 +28,11 @@ const Login = () => {
     e.preventDefault();
 
     // Validate form fields
-    // const validationErrors = validateForm();
-    // if (Object.keys(validationErrors).length > 0) {
-    //   setErrors(validationErrors);
-    //   return;
-    // }
+    const validationErrors = validateForm();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
 
     try {
       // Make API request to login
@@ -43,15 +43,21 @@ const Login = () => {
 
       if (response.data.success) {
         console.log(response);
-        
+
         toast.success("Login successful!");
         // Redirect or save token as needed
         const token = response.data.token;
-        console.log(token);
-        
+        // localStorage.setItem("authToken", token);
+        // localStorage.setItem("keepLoggedIn",JSON.stringify(true));
         sessionStorage.setItem("authToken", token);
         navigate('/homeScreen')
+
         fetchUserDetails();
+        if (response.data.user.userType === "admin") {
+          navigate("/adminHomeScreen");
+        } else {
+          navigate("/homeScreen");
+        }
       } else {
         toast.error(response.data.message || "Login failed");
       }
@@ -61,17 +67,17 @@ const Login = () => {
     }
   };
 
- 
+
 
   // useEffect(() => {
-    
+
   // }, []);
   const fetchUserDetails = async () => {
     try {
       // Retrieve token from localStorage or other secure storage
       const token = sessionStorage.getItem('authToken'); // Replace with actual token retrieval
       console.log(token);
-      
+
       if (!token) {
         // setError('User is not logged in');
         return;
@@ -85,7 +91,7 @@ const Login = () => {
       });
 
       console.log(response);
-      
+
       if (response.data.success) {
         console.log(response.data.user);
       } else {
@@ -129,7 +135,7 @@ const Login = () => {
           Login
         </button>
       </form>
-      
+
       <p style={{ textAlign: "center" }}>
         Don't have an account?{" "}
         <Link

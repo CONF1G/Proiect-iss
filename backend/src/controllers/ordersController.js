@@ -143,54 +143,65 @@ export const updateOrder = async (req, res) => {
   const connection = await db.getConnection();
   try {
     await connection.beginTransaction();
-    
+
+    console.log("Request body:", req.body); // Log the request body
+
     const { id } = req.params;
     const { productId, quantity } = req.body;
-    
+
+    console.log("Incoming update request:", { id, productId, quantity });
+
     const validation = validateOrderData(productId, quantity);
     if (!validation.valid) {
+      console.log("Validation failed:", validation.message);
       return res.status(400).json({
         success: false,
-        message: validation.message
+        message: validation.message,
       });
     }
 
     // Verify order exists
     const [existingOrder] = await connection.query(
-      'SELECT id FROM orders WHERE id = ? FOR UPDATE',
+      "SELECT id FROM orders WHERE id = ? FOR UPDATE",
       [id]
     );
+    console.log("Existing order query result:", existingOrder);
 
     if (existingOrder.length === 0) {
+      console.log("Order not found for ID:", id);
       return res.status(404).json({
         success: false,
-        message: "Order not found"
+        message: "Order not found",
       });
     }
 
     // Verify new product exists
     const [product] = await connection.query(
-      'SELECT id FROM products WHERE id = ?',
+      "SELECT id FROM products WHERE id = ?",
       [productId]
     );
+    console.log("Product query result:", product);
 
     if (product.length === 0) {
+      console.log("Product not found for ID:", productId);
       return res.status(404).json({
         success: false,
-        message: "Product not found"
+        message: "Product not found",
       });
     }
 
     // Update the order
+    console.log("Updating order...");
     await connection.query(
-      'UPDATE orders SET product_id = ?, quantity = ? WHERE id = ?',
+      "UPDATE orders SET product_id = ?, quantity = ? WHERE id = ?",
       [productId, quantity, id]
     );
 
     await connection.commit();
 
     // Get updated order details
-    const [updatedOrder] = await db.query(`
+    const [updatedOrder] = await db.query(
+      `
       SELECT 
         o.id,
         o.product_id,
@@ -201,32 +212,28 @@ export const updateOrder = async (req, res) => {
       FROM orders o
       JOIN products p ON o.product_id = p.id
       WHERE o.id = ?
-    `, [id]);
+    `,
+      [id]
+    );
+    console.log("Updated order details:", updatedOrder);
 
     res.status(200).json({
       success: true,
       message: "Order updated successfully",
-      data: updatedOrder[0]
+      data: updatedOrder[0],
     });
-
   } catch (error) {
     await connection.rollback();
     console.error("Order update failed:", error);
-    
+
     res.status(500).json({
       success: false,
       message: "Failed to update order",
-      error: process.env.NODE_ENV === 'development' ? {
-        message: error.message,
-        code: error.code,
-        sql: error.sql
-      } : undefined
     });
   } finally {
     connection.release();
   }
 };
-
 // Delete an order
 export const deleteOrder = async (req, res) => {
   const connection = await db.getConnection();

@@ -10,7 +10,7 @@ const PlaceOrder = () => {
     productId: "",
     quantity: 1,
   });
-  const [editingOrder, setEditingOrder] = useState(null);
+  const [editingOrder, setEditingOrder] = useState();
   const [error, setError] = useState("");
 
   const API_BASE_URL = "http://localhost:3300/api";

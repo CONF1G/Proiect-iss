@@ -1,12 +1,13 @@
+// routes/userRoutes.js
 import express from 'express';
-import { register, login, getUserDetails } from '../controllers/authController.js';
-import { protect } from '../middleware/authMiddleware.js';
+import { getUserDetails, login, register } from '../controllers/authController.js';
 
-const router = express.Router(); // ✅ This should come BEFORE router.get/post
+
+const router = express.Router();
 
 router.post('/register', register);
 router.post('/login', login);
-router.get('/profile', getUserDetails);
 router.get('/get-userDetails', getUserDetails);
-//,protect
+
+
 export default router;
