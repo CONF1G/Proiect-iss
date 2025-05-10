@@ -19,8 +19,8 @@ app.use(express.json()); // Middleware to parse JSON bodies
 app.use('/api/users', userRoutes); // Use user routes for API calls
 app.use('/api/auth', authRoutes); // Use user routes for API calls
 //crud products
-app.use('/api', productsRoutes);
-
+app.use('/api/products', productsRoutes);
+app.use('/api/orders', productsRoutes);
 
 app.listen(3300, async() => {
   console.log('Server running on port 3300');

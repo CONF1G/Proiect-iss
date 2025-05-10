@@ -197,3 +197,44 @@
   button:hover {
     opacity: 0.8;
   }
+
+  .main-page-container {
+    padding: 20px;
+    font-family: Arial, sans-serif;
+  }
+  
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+  }
+  
+  th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+  }
+  
+  th {
+    background-color: #f4f4f4;
+  }
+  
+  .error-message {
+    color: red;
+    margin-bottom: 10px;
+  }
+
+  /* filepath: /home/conf1g/Documents/Tutorial/client/src/pages/MainPage.css */
+.login-btn {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.login-btn:hover {
+  background-color: #0056b3;
+}
