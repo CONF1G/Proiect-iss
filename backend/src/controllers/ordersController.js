@@ -28,15 +28,15 @@ export const getOrders = async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to fetch orders' });
   }
 };
-  
+
 // Create a new order with transaction support
 export const createOrder = async (req, res) => {
   const connection = await db.getConnection();
+
   try {
     await connection.beginTransaction();
 
-    const { productId, quantity } = req.body;
-
+    const { productId, quantity } = req.body; // 👈 move this to the top
     const validation = validateOrderData(productId, quantity);
     if (!validation.valid) {
       return res.status(400).json({
@@ -45,9 +45,9 @@ export const createOrder = async (req, res) => {
       });
     }
 
-    // Verify product exists
+    // Check if product exists
     const [product] = await connection.query(
-      'SELECT price FROM products WHERE id = ?',
+      'SELECT price, stock FROM products WHERE id = ?',
       [productId]
     );
 
@@ -58,10 +58,34 @@ export const createOrder = async (req, res) => {
       });
     }
 
-    // Calculate total price
-    const totalPrice = product[0].price * quantity;
+    // Check stock availability
+    if (product[0].stock < quantity) {
+      return res.status(400).json({
+        success: false,
+        message: `Not enough stock. Only ${product[0].stock} left.`,
+      });
+    }
 
-    // Insert the order
+    // Update stock
+    await connection.query(
+      'UPDATE products SET stock = stock - ? WHERE id = ?',
+      [quantity, productId]
+    );
+
+    // Emit stockLow event *after* reading productId and stock
+    if (product[0].stock - quantity <= 5) {
+      const io = req.app.get("io");
+      if (io) {
+        io.emit("stockLow", {
+          productId,
+          productName: product[0].name || "", // optional if you want
+          remaining: product[0].stock - quantity,
+        });
+      }
+    }
+
+    // Insert order
+    const totalPrice = product[0].price * quantity;
     const [result] = await connection.query(
       'INSERT INTO orders (product_id, quantity, total_price) VALUES (?, ?, ?)',
       [productId, quantity, totalPrice]
@@ -83,15 +107,9 @@ export const createOrder = async (req, res) => {
   } catch (error) {
     await connection.rollback();
     console.error("Order creation failed:", error);
-
     res.status(500).json({
       success: false,
-      message: "Failed to create order",
-      error: process.env.NODE_ENV === 'development' ? {
-        message: error.message,
-        code: error.code,
-        sql: error.sql
-      } : undefined
+      message: "Failed to create order"
     });
   } finally {
     connection.release();
@@ -103,20 +121,22 @@ export const createOrder = async (req, res) => {
 export const getOrderById = async (req, res) => {
   try {
     const { id } = req.params;
-    
-    const [order] = await db.query(`
-      SELECT 
-        o.id,
-        o.product_id,
-        p.name AS product_name,
-        p.price AS unit_price,
-        o.quantity,
-        (p.price * o.quantity) AS total_price,
-        p.description AS product_description
-      FROM orders o
-      JOIN products p ON o.product_id = p.id
-      WHERE o.id = ?
-    `, [id]);
+
+    const query = `
+    SELECT 
+    o.id AS order_id,
+    o.product_id,
+    p.name AS product_name,
+    p.price AS unit_price,
+    o.quantity,
+    (p.price * o.quantity) AS total_price
+FROM 
+    orders o
+INNER JOIN 
+    products p ON o.product_id = p.id;
+  `;
+    const [results] = await db.query(query);
+    res.status(200).json({ success: true, orders: results });
 
     if (order.length === 0) {
       return res.status(404).json({
@@ -239,7 +259,7 @@ export const deleteOrder = async (req, res) => {
   const connection = await db.getConnection();
   try {
     await connection.beginTransaction();
-    
+
     const { id } = req.params;
 
     // Verify order exists
@@ -270,7 +290,7 @@ export const deleteOrder = async (req, res) => {
   } catch (error) {
     await connection.rollback();
     console.error("Order deletion failed:", error);
-    
+
     res.status(500).json({
       success: false,
       message: "Failed to delete order"

@@ -1,0 +1,144 @@
+import React, { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { 
+  faSignOutAlt, 
+  faUser, 
+  faHome, 
+  faShoppingCart, 
+  faCog,
+  faUserShield // Added admin-specific icon
+} from '@fortawesome/free-solid-svg-icons';
+import "../App.css";
+
+const Header = () => {
+    const location = useLocation();
+    const [userData, setUserData] = useState(null);
+    const [userType, setUserType] = useState(null);
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        getData();
+    }, [location]);
+
+    const getData = async () => {
+        const data = await JSON.parse(sessionStorage.getItem("userData"));
+        console.log("Header data:", data);
+
+        if (data && data.isLoggedIn) {
+            setUserData(data.userData);
+            setUserType(data.userType || "user"); // Default to "user" if not specified
+        } else {
+            setUserData(null);
+            setUserType(null);
+        }
+    };
+
+    const logout = () => {
+        sessionStorage.clear();
+        setUserData(null);
+        setUserType(null);
+        navigate("/");
+    };
+
+    return (
+        <nav className={`navbar ${userType === "admin" ? "admin-navbar" : ""}`}>
+            <div className="navbar-logo">
+                <span className="logo-text">ProductSellYOU</span>
+                {userType === "admin" && (
+                    <span className="admin-badge">ADMIN</span>
+                )}
+            </div>
+        
+            <ul className="navbar-links">
+                <li>
+                    <Link to="/" className={location.pathname === "/" ? "active" : ""}>
+                        <FontAwesomeIcon icon={faHome} className="nav-icon" />
+                        <span>Home</span>
+                    </Link>
+                </li>
+                
+                {/* Show Place Order for all users */}
+                <li>
+                    <Link to="/placeOrder" className={location.pathname === "/placeOrder" ? "active" : ""}>
+                        <FontAwesomeIcon icon={faShoppingCart} className="nav-icon" />
+                        <span>Place Order</span>
+                    </Link>
+                </li>
+            
+                {/* Admin-specific navigation */}
+                {userType === "admin" && (
+                    <>
+                        <li>
+                            <Link to="/admin/store" className={location.pathname === "/admin/store" ? "active" : ""}>
+                                <FontAwesomeIcon icon={faCog} className="nav-icon" />
+                                <span>Manage Store</span>
+                            </Link>
+                        </li>
+                        <li>
+                            <Link to="/admin/users" className={location.pathname === "/admin/users" ? "active" : ""}>
+                                <FontAwesomeIcon icon={faUserShield} className="nav-icon" />
+                                <span>Manage Users</span>
+                            </Link>
+                        </li>
+                    </>
+                )}
+            
+                {userData ? (
+                    <>
+                        <li className="navbar-profile">
+                            <Link
+                                to={userType === "admin" ? "/admin/dashboard" : "/profile"}
+                                className={
+                                    location.pathname === (userType === "admin" ? "/adminHomeScreen" : "/profile") 
+                                    ? "active" 
+                                    : ""
+                                }
+                                style={{ display: "flex", alignItems: "center" }}
+                            >
+                                <img
+                                    src={userData.profileImage || require("../image.png")}
+                                    alt="Profile"
+                                    className="profile-photo-circle"
+                                />
+                                <div className="profile-info">
+                                    <span className="username">{userData.name}</span>
+                                    {userType === "admin" && (
+                                        <span className="user-role">Administrator</span>
+                                    )}
+                                </div>
+                            </Link>
+                        </li>
+                        <li>
+                            <button
+                                onClick={logout}
+                                className="logout-btn"
+                                style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                            >
+                                <FontAwesomeIcon icon={faSignOutAlt} className="nav-icon" />
+                                <span>Logout</span>
+                            </button>
+                        </li>
+                    </>
+                ) : (
+                    <>
+                        <li>
+                            <Link to="/login" className={location.pathname === "/login" ? "active" : ""}>
+                                <FontAwesomeIcon icon={faUser} className="nav-icon" />
+                                <span>Login</span>
+                            </Link>
+                        </li>
+                        <li>
+                            <Link to="/signup" className={location.pathname === "/signup" ? "active" : ""}>
+                                <FontAwesomeIcon icon={faUser} className="nav-icon" />
+                                <span>Sign Up</span>
+                            </Link>
+                        </li>
+                    </>
+                )}
+            </ul>
+        </nav>
+    );
+};
+
+export default Header;

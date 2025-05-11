@@ -9,6 +9,8 @@ import 'react-toastify/dist/ReactToastify.css'; // Import default CSS for toasti
 import UserHomeScreen from "./pages/UserHomeScreen";
 import PlaceOrder from "./pages/PlaceOrder";
 import AdminPage from "./pages/AdminPage";
+import UserProfile from "./pages/UserProfile";
+import ManageUsers from "./pages/ManageUsers";
 
 const Login = lazy(() => import("./pages/Login"));
 const Signup = lazy(() => import("./pages/Signup"));
@@ -18,26 +20,29 @@ const App = () => {
   const isLoggedIn = JSON.parse(localStorage.getItem("keepLoggedIn"));
   return (
     <Router>
-      <Header/>
+      <Header />
       <Suspense fallback={<div>Loading...</div>}>
         <Routes>
-          <Route path="/" element={isLoggedIn?<Navigate to = {"UserHomeScreen"}/>:<Home />} />
+          <Route path="/" element={ <Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/user/home" element={<Home />} />
           <Route path="/homeScreen" element={<UserHomeScreen />} />
+          <Route path="/user/profile" element={<UserProfile />} />
           <Route path="/placeOrder" element={<PlaceOrder />} />
-          <Route path="/adminHomeScreen" element={<AdminPage />} />
+          <Route path="/admin/inventory" element={<AdminPage />} />
+          <Route path="/admin/users" element={<ManageUsers />} />
           {/* Add more routes as needed */}
-          <Route path="*" element={<NotFound />} />
+          {/* <Route path="*" element={<NotFound />} /> */}
         </Routes>
       </Suspense>
-      <ToastContainer 
-        position="top-center" 
-        autoClose={1000} 
-        hideProgressBar={true} 
-        closeOnClick 
+      <ToastContainer
+        position="top-center"
+        autoClose={1000}
+        hideProgressBar={true}
+        closeOnClick
         // pauseOnHover  
-        theme="colored" 
+        theme="colored"
       />
     </Router>
   );

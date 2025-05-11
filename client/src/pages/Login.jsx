@@ -47,14 +47,18 @@ const Login = () => {
         toast.success("Login successful!");
         // Redirect or save token as needed
         const token = response.data.token;
-        // localStorage.setItem("authToken", token);
-        // localStorage.setItem("keepLoggedIn",JSON.stringify(true));
+        const sessionObject = {
+          isLoggedIn: true,
+          userData: response.userData,  // or whatever you're receiving from backend
+          userType: response.userType,  // should be "admin" or "user"
+        };
+        sessionStorage.setItem("userData", JSON.stringify(sessionObject));
         sessionStorage.setItem("authToken", token);
         navigate('/homeScreen')
 
         fetchUserDetails();
         if (response.data.user.userType === "admin") {
-          navigate("/adminHomeScreen");
+          navigate("/admin/inventory");
         } else {
           navigate("/homeScreen");
         }

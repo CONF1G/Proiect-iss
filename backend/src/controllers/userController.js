@@ -3,7 +3,7 @@ const users = []; // Array to store user data
 
 // Function to get all users
 export const getAllUsers = (req, res) => {
-    const q = "SELECT * FROM users"
+    const q = "SELECT * FROM test.users"
     db.query(q, (err, data) => {
         if (err) return res.json(err)
         return res.json(data)
